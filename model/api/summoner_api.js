@@ -7,7 +7,7 @@ const InternalCodeError = require("../internal_code_error");
 // get summoner data from db
 function getSummoner(name) {
     return new Promise((resolve, reject) => {
-        db_conn.queryToDB(`SELECT * FROM Summoner WHERE name=${name};`)
+        db_conn.queryToDB(`SELECT * FROM Summoner WHERE name='${name}';`)
         .then(rows => {
             if (rows.length == 1) {
                 resolve(rows[0]);
