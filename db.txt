@@ -1,0 +1,37 @@
+create table Summoner 
+(
+    accountId varchar(56),
+    profileIconId int,
+    revisionDate long,
+    name varchar(100),
+    id varchar(63),
+    puuid varchar(78) PRIMARY KEY,
+    summonerLevel long
+);
+
+create table Play (
+    puuid varchar(78),
+    matchId varchar(30),
+    gameEndTimestamp long,
+PRIMARY KEY(puuid, matchId));
+
+create table Matches (
+    matchId varchar(30) PRIMARY KEY,
+    gameCreation long,
+    gameDuration long,
+    gameEndTimestamp long,
+    gameId long,
+    gameMode varchar(30),
+    gameName varchar(60),
+    gameStartTimestamp long,
+    gameType varchar(40),
+    gameVersion varchar(40),
+    mapId int,
+    platformId varchar(20),
+    queueId int,
+    tournamentCode varchar(50)
+);
+
+create table Participant (
+    matchId varchar(30)
+);
