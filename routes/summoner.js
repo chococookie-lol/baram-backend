@@ -33,7 +33,7 @@ router.get('/:name', middleware(name_schema), (req, res) => {
     SummonerApi.getSummoner(req.params.name)
     .then(data => {
         res.status(200).json(data);
-    }, err => res.status(500).json({error: err.message}));
+    }, err => res.status(err.code).json({error: err.message}));
 });
 
 // /summoners/{name}
@@ -41,7 +41,7 @@ router.post('/:name', middleware(name_schema), (req, res) => {
     console.log('fetch start');
     SummonerApi.fetchSummonerFromRiot(req.params.name)
     .then(
-        data => res.status(200).json({rows: data}),
+        data => res.status(200).json(),
         err => res.status(err.code).json({message: err.message}));
 });
 
