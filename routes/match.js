@@ -54,10 +54,10 @@ router.get('/:matchId/fetch', (req, res) => {
 router.get('/:matchId', (req, res) => {
     MatchApi.getMatchData(req.params.matchId) 
     .then(data => {
-        res.send(new Result(200, {data}));
+        res.status(200).json(data);
     }, err => {
         if (err == 404) {
-            res.send(new Result(404, {message: 'Data not found'}));
+            res.status(404).json({message: 'Data not found'});
         } else {
             res.send(new Result(500, {message: 'Internal server error', error: err}));
         }
