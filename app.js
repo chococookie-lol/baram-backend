@@ -12,6 +12,13 @@ var cors = require('cors');
 // test
 var db_testRouter = require('./routes/db_test');
 
+require('console-stamp')(console, '[yyyy-MM-dd HH:MM:ss]');
+
+process.on('uncaughtException', function (e) {
+  console.log(e.stack || e);
+  process.exit(1);
+});
+
 var app = express();
 
 app.use(cors({origin: 'http://baram.ga',credentials: true}));
