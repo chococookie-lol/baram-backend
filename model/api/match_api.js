@@ -1,7 +1,7 @@
 const api_key = require('./api_key');
 
 const fetch = require("node-fetch");
-const db_conn = require("../../model/sql");
+const db_conn = require("../db/db");
 const InternalCodeError = require('../internal_code_error');
 
 function getMatchData(matchId) {

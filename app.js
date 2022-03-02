@@ -9,9 +9,6 @@ var matchesRouter = require('./routes/match');
 var errorRouter = require('./routes/error');
 var cors = require('cors');
 
-// test
-var db_testRouter = require('./routes/db_test');
-
 require('console-stamp')(console, '[yyyy-MM-dd HH:MM:ss]');
 
 process.on('uncaughtException', function (e) {
@@ -29,9 +26,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use('/', indexRouter);
 app.use('/summoners', summonerRouter);
 app.use('/matches', matchesRouter);
-
-// test
-app.use('/db_test', db_testRouter);
 
 app.use('*', errorRouter);
 
