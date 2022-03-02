@@ -86,7 +86,8 @@ function fetchMatchIdsFromRiot(puuid, count) {
         .then(res => res.json()) 
         .then(data => {
             if (data.status != undefined) {
-                reject(data);
+                console.error(new Date() + ' : ' + JSON.stringify(data));
+                reject(new InternalCodeError(403, data.status.message));
                 return;
             }
 
@@ -96,7 +97,8 @@ function fetchMatchIdsFromRiot(puuid, count) {
                 .then(data => {
                     // 404 from Riot api
                     if (data.status != undefined) {
-                        reject(data);
+                        console.error(new Date() + ' : ' + JSON.stringify(data));
+                        reject(new InternalCodeError(403, data.status.message));
                         return;
                     }
 
@@ -107,7 +109,8 @@ function fetchMatchIdsFromRiot(puuid, count) {
                         return;
 
                     db_conn.queryToDB(`REPLACE INTO Play (puuid, matchId, gameEndTimestamp) VALUES('${puuid}', '${matchId}', ${gameEndTimestamp});`)
-                    .then(console.log('1 record replaced'), reject);
+                    .then(console.log('1 record replaced'),
+                    err => reject(new InternalCodeError(403, 'DB error')));
                 })
             }
 
