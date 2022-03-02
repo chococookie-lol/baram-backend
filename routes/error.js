@@ -4,7 +4,7 @@ const Result = require("../model/result");
 var router = express.Router();
 
 router.get('*', (req, res) => {
-    res.send(new Result(404, 'error'));
+    res.status(404).json({message: 'Not Found'});
 });
 
 module.exports = router;
