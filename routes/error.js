@@ -1,5 +1,4 @@
 const express = require("express");
-const Result = require("../model/result");
 
 var router = express.Router();
 

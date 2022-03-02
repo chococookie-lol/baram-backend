@@ -1,5 +1,4 @@
 const express = require("express");
-const Result = require("../model/result");
 const MatchApi = require('../model/api/match_api');
 const Joi = require('joi');
 

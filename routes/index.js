@@ -1,10 +1,9 @@
 const express = require("express");
-const Result = require("../model/result");
 
 var router = express.Router();
 
 router.get('/', (req, res) => {
-    res.send(new Result(200, {message: 'server available'}));
+    res.status(200).json({message: 'Server available'});
 });
 
 module.exports = router;
