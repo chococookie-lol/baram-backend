@@ -14,6 +14,8 @@ var db_testRouter = require('./routes/db_test');
 
 var app = express();
 
+app.use(cors({origin: 'http://baram.ga',credentials: true}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -26,6 +28,5 @@ app.use('/db_test', db_testRouter);
 
 app.use('*', errorRouter);
 
-app.use(cors('http://baram.ga'));
 
 app.listen(3001, () => console.log("server online"));
