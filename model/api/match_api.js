@@ -9,14 +9,16 @@ function getMatchData(matchId) {
         db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`)
         .then(rows => {
             if (rows.length == 0) {
-                reject(404);
+                reject(new InternalCodeError(404, 'Match not found'));
                 return;
             } else if (rows.length == 1) {
                 resolve(rows[0]);
             } else {
-                reject();
+                console.error(JSON.stringify(rows));
+                reject(new InternalCodeError(409, 'DB data conflict'));
             }
-        }, reject);
+        }, 
+        () => reject(new InternalCodeError(403, 'DB error')));
     });
 }
 
@@ -27,7 +29,7 @@ function fetchMatchDataFromRiot(matchId) {
         .then(data => {
             // 404 from Riot api
             if (data.status != undefined) {
-                reject(data);
+                reject(new InternalCodeError(404, 'Match not found'));
                 return;
             }
             return data.info;
@@ -50,7 +52,7 @@ function fetchMatchDataFromRiot(matchId) {
             db_conn.queryToDB(`SELECT matchId FROM Matches WHERE matchId='${matchId}';`)
             .then(rows => {
                 if (rows.length == 1) {
-                    reject('Data already exists');
+                    reject(new InternalCodeError(409, 'Data already exists'));
                     return;
                 }
                 const sql = `INSERT INTO Matches(matchId, gameCreation, gameDuration, gameEndTimestamp, gameId, gameMode, gameName, gameStartTimestamp, gameType, gameVersion, mapId, platformId, queueId, tournamentCode) 
@@ -75,7 +77,8 @@ function getMatchIds(puuid, count) {
                 return;
             }
             resolve(rows);
-        }, reject);
+        }, 
+        () => reject(new InternalCodeError(403, 'DB error')));
     });
 }
 
@@ -110,7 +113,7 @@ function fetchMatchIdsFromRiot(puuid, count) {
 
                     db_conn.queryToDB(`REPLACE INTO Play (puuid, matchId, gameEndTimestamp) VALUES('${puuid}', '${matchId}', ${gameEndTimestamp});`)
                     .then(console.log('1 record replaced'),
-                    err => reject(new InternalCodeError(403, 'DB error')));
+                    () => reject(new InternalCodeError(403, 'DB error')));
                 })
             }
 
