@@ -63,6 +63,7 @@ router.post('/:matchId', middleware(matchId_schema), (req, res) => {
         err => res.status(err.code).json({message: err.message})
     )
     .catch(err => {
+        console.trace();
         console.error(JSON.stringify(err));
         res.status(500).json({message: err.message})
     });

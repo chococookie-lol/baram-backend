@@ -4,122 +4,99 @@ const fetch = require("node-fetch");
 const db_conn = require("../db/db");
 const InternalCodeError = require('../internal_code_error');
 
-function getMatchData(matchId) {
-    return new Promise((resolve, reject) => {
-        db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`)
-        .then(rows => {
-            if (rows.length == 0) {
-                reject(new InternalCodeError(404, 'Match not found'));
-                return;
-            } else if (rows.length == 1) {
-                resolve(rows[0]);
-            } else {
-                console.error(JSON.stringify(rows));
-                reject(new InternalCodeError(409, 'DB data conflict'));
-            }
-        }, 
-        () => reject(new InternalCodeError(403, 'DB error')));
-    });
+async function getMatchData(matchId) {
+    let dbResult = await db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`);
+
+    if (dbResult.length == 0) 
+        throw new InternalCodeError(404, 'Match not found');
+    else if (dbResult.length == 1)
+        return dbResult[0];
+    else {
+        console.error(JSON.stringify(dbResult));
+        throw new InternalCodeError(409, 'DB data conflict');
+    }
 }
 
-function fetchMatchDataFromRiot(matchId) {
-    return new Promise((resolve, reject) => {
-        fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${api_key}`)
-        .then(res => res.json())
-        .then(data => {
-            // 404 from Riot api
-            if (data.status != undefined) {
-                reject(new InternalCodeError(404, 'Match not found'));
-                return;
-            }
-            return data.info;
-        })
-        .then(data => {
-            const gameCreation = data.gameCreation;
-            const gameDuration = data.gameDuration;
-            const gameEndTimestamp = data.gameEndTimestamp;
-            const gameId = data.gameId;
-            const gameMode = data.gameMode;
-            const gameName = data.gameName;
-            const gameStartTimestamp = data.gameStartTimestamp;
-            const gameType = data.gameType;
-            const gameVersion = data.gameVersion;
-            const mapId = data.mapId;
-            const platformId = data.platformId;
-            const queueId = data.queueId;
-            const tournamentCode = data.tournamentCode;
+async function fetchMatchDataFromRiot(matchId) {
+    let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${api_key}`).then(res => res.json());
 
-            db_conn.queryToDB(`SELECT matchId FROM Matches WHERE matchId='${matchId}';`)
-            .then(rows => {
-                if (rows.length == 1) {
-                    reject(new InternalCodeError(409, 'Data already exists'));
-                    return;
-                }
-                const sql = `INSERT INTO Matches(matchId, gameCreation, gameDuration, gameEndTimestamp, gameId, gameMode, gameName, gameStartTimestamp, gameType, gameVersion, mapId, platformId, queueId, tournamentCode) 
-                VALUES('${matchId}', ${gameCreation}, ${gameDuration}, ${gameEndTimestamp}, ${gameId}, '${gameMode}', '${gameName}', ${gameStartTimestamp}, '${gameType}', '${gameVersion}', ${mapId}, '${platformId}', ${queueId}, '${tournamentCode}');`;
+    if (fetchedData.status != undefined)
+        throw new InternalCodeError(401, `Match id[${matchId}]: not found`);
 
-                db_conn.queryToDB(sql)
-                .then(rows => {
-                    resolve(rows);
-                }, console.error);
-            })
-        })
-    });
+    fetchedData = fetchedData.info;
+
+    const gameCreation = fetchedData.gameCreation;
+    const gameDuration = fetchedData.gameDuration;
+    const gameEndTimestamp = fetchedData.gameEndTimestamp;
+    const gameId = fetchedData.gameId;
+    const gameMode = fetchedData.gameMode;
+    const gameName = fetchedData.gameName;
+    const gameStartTimestamp = fetchedData.gameStartTimestamp;
+    const gameType = fetchedData.gameType;
+    const gameVersion = fetchedData.gameVersion;
+    const mapId = fetchedData.mapId;
+    const platformId = fetchedData.platformId;
+    const queueId = fetchedData.queueId;
+
+    let searchMatch = await db_conn.queryToDB(`SELECT matchId FROM Matches WHERE matchId='${matchId}';`);
+
+    if (searchMatch.length == 1) 
+        throw new InternalCodeError(409, 'Data already exists');
+    
+    const sql = `INSERT INTO Matches(matchId, gameCreation, gameDuration, gameEndTimestamp, gameId, gameMode, gameName, gameStartTimestamp, gameType, gameVersion, mapId, platformId, queueId, tournamentCode) 
+    VALUES('${matchId}', ${gameCreation}, ${gameDuration}, ${gameEndTimestamp}, ${gameId}, '${gameMode}', '${gameName}', ${gameStartTimestamp}, '${gameType}', '${gameVersion}', ${mapId}, '${platformId}', ${queueId}, '${tournamentCode}');`;
+    
+    return db_conn.queryToDB(sql);
 }
 
-function getMatchIds(puuid, count) {
-    return new Promise((resolve, reject) => {
-        db_conn.queryToDB(`SELECT matchId FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp DESC LIMIT ${count};`)
-        .then(rows => {
-            console.log(rows.length + ' records selected');
-            if (rows.length == 0) {
-                reject(new InternalCodeError(404, 'Matches not found'));
-                return;
-            }
-            resolve(rows);
-        }, 
-        () => reject(new InternalCodeError(403, 'DB error')));
-    });
+async function getMatchIds(puuid, count) {
+    let dbResult = db_conn.queryToDB(`SELECT matchId FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp DESC LIMIT ${count};`);
+
+    console.log(rows.length + ' records selected');
+
+    if (dbResult.length == 0)
+        throw new InternalCodeError(404, 'Matches not found');
+
+    return dbResult;
 }
 
 // fetch match ids from riot api server
-function fetchMatchIdsFromRiot(puuid, count) {
-    return new Promise((resolve, reject) => {
-        fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}`)
-        .then(res => res.json()) 
-        .then(data => {
-            if (data.status != undefined) {
-                console.error(new Date() + ' : ' + JSON.stringify(data));
-                reject(new InternalCodeError(403, data.status.message));
-                return;
-            }
+async function fetchMatchIdsFromRiot(puuid, count) {
+    let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}`)
+        .then(res => res.json());
+    
+    if (fetchedData.status != undefined) {
+        console.error(JSON.stringify(data));
+        throw new InternalCodeError(403, data.status.message);
+    }
 
-            for (let matchId of data) {
-                fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${api_key}`)
-                .then(res => res.json())
-                .then(data => {
-                    // 404 from Riot api
-                    if (data.status != undefined) {
-                        console.error(new Date() + ' : ' + JSON.stringify(data));
-                        reject(new InternalCodeError(403, data.status.message));
-                        return;
-                    }
+    const promises = fetchedData.map((matchId) => {
+        return fetchOnlyARAM(matchId, puuid);
+    });
 
-                    const gameEndTimestamp = data.info.gameEndTimestamp;
-                    
-                    // only ARAM
-                    if (data.info.gameMode != "ARAM") 
-                        return;
+    const dbResult = await Promise.all(promises);
 
-                    db_conn.queryToDB(`REPLACE INTO Play (puuid, matchId, gameEndTimestamp) VALUES('${puuid}', '${matchId}', ${gameEndTimestamp});`)
-                    .then(console.log('1 record replaced'),
-                    () => reject(new InternalCodeError(403, 'DB error')));
-                })
-            }
+    console.log(dbResult);
+}
 
-            resolve();
-        })
-    })
+async function fetchOnlyARAM(matchId, puuid) {
+    let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${api_key}`)
+        .then(res => res.json());
+
+    if (fetchedData.status != undefined) 
+        throw new InternalCodeError(403, fetchedData.status.message);
+
+    const gameEndTimestamp = fetchedData.info.gameEndTimestamp;
+                
+    // only ARAM
+    if (fetchedData.info.gameMode != "ARAM") 
+        return {gameMode: fetchedData.info.gameMode};
+
+    await db_conn.queryToDB(`REPLACE INTO Play (puuid, matchId, gameEndTimestamp) VALUES('${puuid}', '${matchId}', ${gameEndTimestamp});`)
+
+    console.log('1 record replaced');
+
+    return {gameMode: fetchedData.info.gameMode};
 }
 
 module.exports = {fetchMatchIdsFromRiot, getMatchIds, fetchMatchDataFromRiot, getMatchData};
