@@ -50,7 +50,7 @@ async function fetchMatchDataFromRiot(matchId) {
 }
 
 async function getMatchIds(puuid, count) {
-    let dbResult = db_conn.queryToDB(`SELECT matchId FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp DESC LIMIT ${count};`);
+    let dbResult = await db_conn.queryToDB(`SELECT matchId FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp DESC LIMIT ${count};`);
 
     console.log(rows.length + ' records selected');
 
