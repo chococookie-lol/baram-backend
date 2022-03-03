@@ -67,11 +67,11 @@ async function fetchMatchIdsFromRiot(puuid, count) {
     
     if (fetchedData.status != undefined) {
         console.error(JSON.stringify(data));
-        throw new InternalCodeError(403, data.status.message);
+        throw new InternalCodeError(403, fetchedData.status.message);
     }
 
     const promises = fetchedData.map((matchId) => {
-        return fetchOnlyARAM(matchId, puuid);
+        return fetchOnlyARAM(matchId, fetchedData.info.puuid);
     });
 
     const dbResult = await Promise.all(promises);
