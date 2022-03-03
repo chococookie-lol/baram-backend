@@ -5,7 +5,10 @@ const Joi = require('joi');
 var router = express.Router();
 
 const puuid_count_schema = Joi.object({
-    params: Joi.object({ puuid: Joi.string().min(78).max(78).required() }).unknown(true),
+    params: Joi.object({
+        puuid: Joi.string().min(78).max(78).required(),
+        type: Joi.string().valid('latest','older'),
+    }).unknown(true),
     query: Joi.object({ count: Joi.number().integer().min(1).max(100) }).unknown(true)
 }).unknown(true);
 
@@ -30,24 +33,27 @@ const middleware = (schema, property) => {
 };
 
 router.post('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
-    let count = (req.query.count != undefined) ? req.query.count : 20;
-    MatchApi.fetchMatchIdsFromRiot(req.params.puuid, count)
+    let count = req.query.count ?? 20;
+    let type = req.query.type ?? 'latest';
+    MatchApi.fetchMatchIdsFromRiot(req.params.puuid, type, count)
     .then(
         () => res.status(201).json({}),
-        err => res.status(err.code).json({error: err.message})
+        err => {console.log(err);res.status(err.code).json({error: err.message})}
     )
     .catch(err => {
+        console.log(err);
         console.error(JSON.stringify(err));
         res.status(500).json({message: err.message})
     });
 })
 
-router.get('/by-puuid/:puuid/ids', middleware(puuid_count_schema), (req, res) => {
-    let count = (req.query.count != undefined) ? req.query.count : 20;
+router.get('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
+    let count = (req.query.count) ? req.query.count : 20;
     MatchApi.getMatchIds(req.params.puuid, count)
     .then(data => {
         res.status(200).json(data.map(i => i.matchId));
     }, err => {
+        console.log(err);
         res.status(err.code).json({message: err.message});
     })
     .catch(err => {

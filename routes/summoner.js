@@ -45,6 +45,7 @@ router.post('/:name', middleware(name_schema), (req, res) => {
         err => res.status(err.code).json({message: err.message}));
 });
 
+// /summoners/{name}/matches
 router.get('/:name/matches', middleware(name_schema), (req, res) => {
     SummonerApi.getSummoner(req.params.name)
     .then(data => {
@@ -57,6 +58,11 @@ router.get('/:name/matches', middleware(name_schema), (req, res) => {
         res.status(err.code).json({message: err.message});
     })
     .catch(err => res.status(500).json({message: err.message}));
+});
+
+// /summoners/{name}/matches
+router.post('/:name/matches', middleware(name_schema), (req, res) => {
+    
 });
 
 module.exports = router;
