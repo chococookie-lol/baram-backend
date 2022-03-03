@@ -1,15 +1,18 @@
 const express = require("express");
 const MatchApi = require('../model/api/match_api');
 const Joi = require('joi');
+const bodyParser = require('body-parser');
 
 var router = express.Router();
 
 const puuid_count_schema = Joi.object({
     params: Joi.object({
         puuid: Joi.string().min(78).max(78).required(),
-        type: Joi.string().valid('latest','older'),
     }).unknown(true),
-    query: Joi.object({ count: Joi.number().integer().min(1).max(100) }).unknown(true)
+    query: Joi.object({
+        count: Joi.number().integer().min(1).max(100),
+        after: Joi.number().integer().min(0).max(10000000000000),
+    }).unknown(true),
 }).unknown(true);
 
 const matchId_schema = Joi.object({
@@ -19,9 +22,8 @@ const matchId_schema = Joi.object({
 const middleware = (schema, property) => {
     return (req, res, next) => { 
         const { error } = schema.validate(req);
-        const valid = error == null;
-    
-        if (valid) { 
+        
+        if (!error) { 
             next();
         } else { 
             const { details } = error; 
@@ -33,9 +35,10 @@ const middleware = (schema, property) => {
 };
 
 router.post('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
-    let count = req.query.count ?? 20;
-    let type = req.query.type ?? 'latest';
-    MatchApi.fetchMatchIdsFromRiot(req.params.puuid, type, count)
+    let count = req.body.count ?? 20;
+    let after = req.body.after;
+    console.log(req.body);
+    MatchApi.fetchMatchIdsFromRiot(req.params.puuid, after, count)
     .then(
         () => res.status(201).json({}),
         err => {console.log(err);res.status(err.code).json({error: err.message})}
@@ -48,8 +51,9 @@ router.post('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
 })
 
 router.get('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
-    let count = (req.query.count) ? req.query.count : 20;
-    MatchApi.getMatchIds(req.params.puuid, count)
+    let count = req.query.count ?? 20;
+    let after = req.query.after;
+    MatchApi.getMatchIds(req.params.puuid, after, count)
     .then(data => {
         res.status(200).json(data.map(i => i.matchId));
     }, err => {

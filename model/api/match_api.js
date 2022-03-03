@@ -53,8 +53,8 @@ async function fetchMatchDataFromRiot(matchId) {
     return db_conn.queryToDB(sql);
 }
 
-async function getMatchIds(puuid, count) {
-    let dbResult = await db_conn.queryToDB(`SELECT matchId FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp DESC LIMIT ${count};`);
+async function getMatchIds(puuid, after, count) {
+    let dbResult = await db_conn.queryToDB(`SELECT matchId FROM Play WHERE puuid=${db_conn.connection.escape(puuid)}${after ? `AND gameEndTimeStamp<${after}`:''} ORDER BY gameEndTimestamp DESC LIMIT ${count};`);
 
     console.log(dbResult.length + ' records selected');
 
@@ -64,24 +64,10 @@ async function getMatchIds(puuid, count) {
     return dbResult;
 }
 
-/* fetch match ids from riot api server
-*  type:
-*   'latest' : fetch latest {count} matches
-*   'older'  : fetch older {count} matches (relative to db)
-*/
-async function fetchMatchIdsFromRiot(puuid, type, count) {
-    let endTime;
-    if(type == 'older'){
-        //get oldest Play's gameEndTimeStamp
-        const oldest = await db_conn.queryToDB(`SELECT gameEndTimeStamp FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp ASC LIMIT 1;`);
-        
-        if(oldest.length == 1){
-            //data exists
-            endTime = Math.floor(oldest[0].gameEndTimeStamp/1000);
-        }
-    }
-
-    let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}&queue=450${endTime ? '&endTime=' + endTime : ''}`)
+//fetch match ids from riot api server
+async function fetchMatchIdsFromRiot(puuid, after, count) {
+    // only support matches after [June 16th, 2021]
+    let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}&queue=450${after ? `&endTime=${Math.round(after/1000)}` : ''}`)
         .then(res => res.json());
     
     if (fetchedData.status != undefined) {

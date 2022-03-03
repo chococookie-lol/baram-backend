@@ -13,9 +13,8 @@ const name_schema = Joi.object().keys({
 const middleware = (schema, property) => {
     return (req, res, next) => { 
         const { error } = schema.validate(req.params);
-        const valid = error == null;
     
-        if (valid) {
+        if (!error) {
             next();
         } else { 
             const { details } = error; 
