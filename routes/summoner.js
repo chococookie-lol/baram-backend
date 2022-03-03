@@ -15,9 +15,7 @@ const middleware = (schema, property) => {
         const { error } = schema.validate(req.params);
         const valid = error == null;
     
-        if (valid) { 
-            //sql escape is done in middleware
-            //req.params.name = mysql.escape(req.params.name);
+        if (valid) {
             next();
         } else { 
             const { details } = error; 
@@ -43,21 +41,6 @@ router.post('/:name', middleware(name_schema), (req, res) => {
     .then(
         data => res.status(200).json(),
         err => res.status(err.code).json({message: err.message}));
-});
-
-// /summoners/{name}/matches
-router.get('/:name/matches', middleware(name_schema), (req, res) => {
-    SummonerApi.getSummoner(req.params.name)
-    .then(data => {
-        let count = (req.query.count != undefined) ? req.query.count : 20;
-        return MatchApi.getMatchIds(data.puuid, count);
-    })
-    .then(data => {
-        res.status(200).json(data.map(i => i.matchId));
-    }, err => {
-        res.status(err.code).json({message: err.message});
-    })
-    .catch(err => res.status(500).json({message: err.message}));
 });
 
 // /summoners/{name}/matches

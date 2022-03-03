@@ -71,7 +71,6 @@ async function getMatchIds(puuid, count) {
 */
 async function fetchMatchIdsFromRiot(puuid, type, count) {
     let endTime;
-    let startTime;
     if(type == 'older'){
         //get oldest Play's gameEndTimeStamp
         const oldest = await db_conn.queryToDB(`SELECT gameEndTimeStamp FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp ASC LIMIT 1;`);
@@ -80,18 +79,9 @@ async function fetchMatchIdsFromRiot(puuid, type, count) {
             //data exists
             endTime = Math.floor(oldest[0].gameEndTimeStamp/1000);
         }
-    }else{
-        //type == 'latest'
-        //get latest Play's gameEndTimeStamp
-        const latest = await db_conn.queryToDB(`SELECT gameEndTimeStamp FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp DESC LIMIT 1;`);
-        
-        if(latest.length == 1){
-            //data exists
-            startTime = Math.floor(latest[0].gameEndTimeStamp/1000);
-        }
     }
 
-    let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}&queue=450${endTime ? '&endTime=' + endTime : ''}${startTime ? '&startTime=' + startTime : ''}`)
+    let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}&queue=450${endTime ? '&endTime=' + endTime : ''}`)
         .then(res => res.json());
     
     if (fetchedData.status != undefined) {
