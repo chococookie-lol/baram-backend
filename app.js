@@ -9,7 +9,7 @@ var matchesRouter = require('./routes/match');
 var errorRouter = require('./routes/error');
 var cors = require('cors');
 
-require('console-stamp')(console, '[yyyy-MM-dd HH:MM:ss]');
+require('console-stamp')(console, '[yyyy-mm-dd HH:MM:ss]');
 
 process.on('uncaughtException', function (e) {
   console.log(e.stack || e);
