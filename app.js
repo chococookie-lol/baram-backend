@@ -12,8 +12,8 @@ var cors = require('cors');
 require('console-stamp')(console, '[yyyy-mm-dd HH:MM:ss]');
 
 process.on('uncaughtException', function (e) {
-  console.log(e.stack || e);
-  process.exit(1);
+    console.log(e.stack || e);
+    process.exit(1);
 });
 
 var app = express();

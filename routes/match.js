@@ -20,75 +20,79 @@ const matchId_schema = Joi.object({
 }).unknown(true);
 
 const middleware = (schema, property) => {
-    return (req, res, next) => { 
+    return (req, res, next) => {
         const { error } = schema.validate(req);
-        
-        if (!error) { 
+
+        if (!error) {
             next();
-        } else { 
-            const { details } = error; 
+        } else {
+            const { details } = error;
             console.log(details);
-            const message = details.map(i => i.message).join(','); 
+            const message = details.map(i => i.message).join(',');
             res.status(400).json({ message: message });
-        } 
+        }
     }
 };
 
+// /matches/by-puuid/{puuid}
+// fetch match data from riot api
 router.post('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
-    let count = req.body.count ?? 20;
-    let after = req.body.after;
-    console.log(req.body);
+    let count = req.query.count ?? 20;
+    let after = req.query.after;
     MatchApi.fetchMatchIdsFromRiot(req.params.puuid, after, count)
-    .then(
-        () => res.status(201).json({}),
-        err => {console.log(err);res.status(err.code).json({error: err.message})}
-    )
-    .catch(err => {
-        console.log(err);
-        console.error(JSON.stringify(err));
-        res.status(500).json({message: err.message})
-    });
+        .then(
+            () => res.status(201).json({}),
+            err => { console.log(err); res.status(err.code).json({ error: err.message }) }
+        )
+        .catch(err => {
+            console.log(err);
+            console.error(JSON.stringify(err));
+            res.status(500).json({ message: err.message })
+        });
 })
 
+// /matches/by-puuid/{puuid}
+// get match data from db
 router.get('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
     let count = req.query.count ?? 20;
     let after = req.query.after;
     MatchApi.getMatchIds(req.params.puuid, after, count)
-    .then(data => {
-        res.status(200).json(data.map(i => i.matchId));
-    }, err => {
-        console.log(err);
-        res.status(err.code).json({message: err.message});
-    })
-    .catch(err => {
-        console.error(JSON.stringify(err));
-        res.status(500).json({message: err.message})
-    });
+        .then(data => {
+            res.status(200).json(data.map(i => i.matchId));
+        }, err => {
+            console.log(err);
+            res.status(err.code).json({ message: err.message });
+        })
+        .catch(err => {
+            console.error(JSON.stringify(err));
+            res.status(500).json({ message: err.message })
+        });
 });
 
+// /matches/{matchId}
 router.post('/:matchId', middleware(matchId_schema), (req, res) => {
     MatchApi.fetchMatchDataFromRiot(req.params.matchId)
-    .then(
-        () => res.status(201).json({}),
-        err => res.status(err.code).json({message: err.message})
-    )
-    .catch(err => {
-        console.trace();
-        console.error(JSON.stringify(err));
-        res.status(500).json({message: err.message})
-    });
+        .then(
+            () => res.status(201).json({}),
+            err => res.status(err.code).json({ message: err.message })
+        )
+        .catch(err => {
+            console.trace();
+            console.error(JSON.stringify(err));
+            res.status(500).json({ message: err.message })
+        });
 });
 
 router.get('/:matchId', middleware(matchId_schema), (req, res) => {
-    MatchApi.getMatchData(req.params.matchId) 
-    .then(
-        data => res.status(200).json(data),
-        err => res.status(err.code).json({message: err.message})
-    )
-    .catch(err => {
-        console.error(JSON.stringify(err));
-        res.status(500).json({message: err.message})
-    });
+    MatchApi.getMatchData(req.params.matchId)
+        .then(
+            data => res.status(200).json(data),
+            err => res.status(err.code).json({ message: err.message })
+        )
+        .catch(err => {
+            console.error(JSON.stringify(err));
+            res.status(500).json({ message: err.message })
+        });
 });
 
 module.exports = router;
