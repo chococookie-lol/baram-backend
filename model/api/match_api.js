@@ -167,7 +167,8 @@ async function fetchMatchData(matchId, puuid) {
                 + `${pdata.item3},`
                 + `${pdata.item4},`
                 + `${pdata.item5},`
-                + `${pdata.item6}`
+                + `${pdata.item6},`
+                + `'${pdata.summonerName}'`
                 + `);`
             ))
         }

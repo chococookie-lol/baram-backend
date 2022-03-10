@@ -57,5 +57,6 @@ create table Participant (
     item4 int,
     item5 int,
     item6 int,
+    summonerName varchar(100),
     PRIMARY KEY(matchId, puuid)
 );
