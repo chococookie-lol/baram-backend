@@ -11,7 +11,7 @@ const match_field_names = ['gameCreation', 'gameDuration',
 const participant_field_names = ['matchId', 'puuid', 'participantNumber', 'goldEarned',
     'totalMinionsKilled', 'kills', 'deaths', 'assists', 'kda', 'killParticipation', 'championId',
     'championName', 'champLevel', 'totalDamageDealtToChampions', 'summoner1Id', 'summoner2Id',
-    'item0', 'item1', 'item2', 'item3', 'item4', 'item5', 'item6', 'summonerName'];
+    'item0', 'item1', 'item2', 'item3', 'item4', 'item5', 'item6', 'summonerName', 'teamId'];
 
 async function getMatchData(matchId) {
     let dbResult = await db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`);
@@ -168,7 +168,8 @@ async function fetchMatchData(matchId, puuid) {
                 + `${pdata.item4},`
                 + `${pdata.item5},`
                 + `${pdata.item6},`
-                + `'${pdata.summonerName}'`
+                + `'${pdata.summonerName}',`
+                + `${pdata.teamId}`
                 + `);`
             ))
         }
