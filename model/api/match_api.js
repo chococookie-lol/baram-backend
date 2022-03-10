@@ -18,8 +18,28 @@ async function getMatchData(matchId) {
 
     if (dbResult.length == 0)
         throw new InternalCodeError(404, 'Match not found');
-    else if (dbResult.length == 1)
-        return dbResult[0];
+    else if (dbResult.length == 1) {
+        let promises = [];
+        let pdata = [];
+        for (let i = 0; i < 10; i++) {
+            promises.push(db_conn.queryToDB(`SELECT * FROM Participant WHERE matchId=${db_conn.connection.escape(matchId)} AND participantNumber=${i};`)
+            .then((rows) => {
+                if (rows.length === 0) {
+                    throw InternalCodeError(404, `Participant not found (matchId: ${matchId}, participantNumber: ${i}`);
+                } 
+                delete rows[0].matchId;
+                delete rows[0].participantNumber;
+                pdata[i] = rows[0];
+                return;
+            }));
+        }
+
+        await Promise.all(promises);
+
+        const ret = dbResult[0];
+        ret['participants'] = pdata;
+        return ret;
+    }
     else {
         console.error(JSON.stringify(dbResult));
         throw new InternalCodeError(409, 'DB data conflict');
@@ -67,7 +87,7 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
             if (fetchedData.length < 100)
                 break;
         }
-        Promise.all(promises);
+        await Promise.all(promises);
     } else {
         //load more or first load
         let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}&queue=450${after ? `&endTime=${Math.floor(after / 1000)}` : ''}`)
