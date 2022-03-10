@@ -2,12 +2,12 @@ create table Summoner
 (
     accountId varchar(56),
     profileIconId int,
-    revisionDate long,
+    revisionDate varchar(30),
     name varchar(100),
     id varchar(63),
     puuid varchar(78) PRIMARY KEY,
     summonerLevel long,
-    recentUpdate long
+    recentUpdate varchar(30)
 );
 
 create table Play (
@@ -36,5 +36,26 @@ create table Matches (
 create table Participant (
     matchId varchar(30),
     puuid varchar(78),
+    participantNumber int,
+    goldEarned long,
+    totalMinionsKilled long,
+    kills int,
+    deaths int, 
+    assists int,
+    kda float,
+    killParticipation float,
+    championId int,
+    championName varchar(30),
+    champLevel int,
+    totalDamageDealtToChampions long,
+    summoner1Id int,
+    summoner2Id int,
+    item0 int,
+    item1 int,
+    item2 int,
+    item3 int,
+    item4 int,
+    item5 int,
+    item6 int,
     PRIMARY KEY(matchId, puuid)
 );

@@ -37,7 +37,7 @@ const middleware = (schema, property) => {
 // /matches/by-puuid/{puuid}
 // fetch match data from riot api
 router.post('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
-    let count = req.query.count ?? 20;
+    let count = req.query.count ?? 10;
     let after = req.query.after;
     MatchApi.fetchMatchIdsFromRiot(req.params.puuid, after, count)
         .then(
@@ -71,7 +71,7 @@ router.get('/by-puuid/:puuid', middleware(puuid_count_schema), (req, res) => {
 
 // /matches/{matchId}
 router.post('/:matchId', middleware(matchId_schema), (req, res) => {
-    MatchApi.fetchMatchDataFromRiot(req.params.matchId)
+    MatchApi.fetchMatchData(req.params.matchId, undefined)
         .then(
             () => res.status(201).json({}),
             err => res.status(err.code).json({ message: err.message })

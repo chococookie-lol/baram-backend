@@ -8,6 +8,11 @@ const match_field_names = ['gameCreation', 'gameDuration',
     'gameEndTimestamp', 'gameId', 'gameMode', 'gameName', 'gameStartTimestamp',
     'gameType', 'gameVersion', 'mapId', 'platformId', 'queueId', 'tournamentCode'];
 
+const participant_field_names = ['matchId', 'puuid', 'participantNumber', 'goldEarned',
+    'totalMinionsKilled', 'kills', 'deaths', 'assists', 'kda', 'killParticipation', 'championId',
+    'championName', 'champLevel', 'totalDamageDealtToChampions', 'summoner1Id', 'summoner2Id',
+    'item0', 'item1', 'item2', 'item3', 'item4', 'item5', 'item6'];
+
 async function getMatchData(matchId) {
     let dbResult = await db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`);
 
@@ -41,10 +46,10 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
     // 처음 로드할 경우 : {count}개만
     // 업데이트일 경우 : 최신~db상 가장 최근 match 까지
     let latest = await db_conn.queryToDB(`SELECT gameEndTimeStamp FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp DESC LIMIT 1;`);
-    if(!after && latest.length == 1) {
+    if (!after && latest.length == 1) {
         //update
         let promises = [];
-        for(let c=0; c<max_matches; c+=batch_size){
+        for (let c = 0; c < max_matches; c += batch_size) {
             const startTime = Math.floor(latest[0].gameEndTimeStamp / 1000);
             let fetchedData = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?api_key=${api_key}&queue=450&start=${c}&count=${batch_size}&startTime=${startTime}`)
                 .then(res => res.json());
@@ -55,10 +60,11 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
             }
 
             fetchedData.map((matchId) => {
-                promises.push(fetchMatchData(matchId, puuid));
+                console.log('fetchMatchData(' + matchId + ');');
+                //promises.push(fetchMatchData(matchId, puuid));
             });
 
-            if(fetchedData.length < 100)
+            if (fetchedData.length < 100)
                 break;
         }
         Promise.all(promises);
@@ -73,7 +79,8 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
         }
 
         const promises = fetchedData.map((matchId) => {
-            return fetchMatchData(matchId, puuid);
+            console.log('fetchMatchData(' + matchId + ');');
+            // return fetchMatchData(matchId, puuid);
         });
 
         const dbResult = await Promise.all(promises);
@@ -106,10 +113,47 @@ async function fetchMatchData(matchId, puuid) {
             }).join()
             + `) VALUES('${matchId}',` +
             match_field_names.map(k => {
-                return `'${mdata.info[k]}'`
+                if (typeof mdata.info[k] == 'string') {
+                    return `'${mdata.info[k]}'`
+                } else {
+                    return `${mdata.info[k]}`
+                }
             }).join() +
             ');')
         );
+
+        // add participants data to db
+        for (let i = 0; i < 10; i++) {
+            let pdata = mdata.info.participants[i];
+            promises.push(db_conn.queryToDB(`REPLACE INTO Participant (` +
+                participant_field_names.join()
+                + `) VALUES (`
+                + `'${matchId}',`
+                + `'${pdata.puuid}',`
+                + `${i},`
+                + `${pdata.goldEarned},`
+                + `${pdata.totalMinionsKilled},`
+                + `${pdata.kills},`
+                + `${pdata.deaths},`
+                + `${pdata.assists},`
+                + `${pdata.challenges.kda},`
+                + `${pdata.challenges.killParticipation},`
+                + `${pdata.championId},`
+                + `'${pdata.championName}',`
+                + `${pdata.champLevel},`
+                + `${pdata.totalDamageDealtToChampions},`
+                + `${pdata.summoner1Id},`
+                + `${pdata.summoner2Id},`
+                + `${pdata.item0},`
+                + `${pdata.item1},`
+                + `${pdata.item2},`
+                + `${pdata.item3},`
+                + `${pdata.item4},`
+                + `${pdata.item5},`
+                + `${pdata.item6}`
+                + `);`
+            ))
+        }
     } else {
         gameEndTimestamp = mdata[0].gameEndTimestamp;
     }
@@ -120,10 +164,12 @@ async function fetchMatchData(matchId, puuid) {
 
     // 전에는 match의 모든 participant에 대한 play를 저장했으나, 이렇게 할 경우 각 플레이어별 match 리스트 관리가 어렵기 때문에 변경
 
-    promises.push(db_conn.queryToDB(`REPLACE INTO Play (puuid, matchId, gameEndTimestamp) VALUES('${puuid}', '${matchId}', ${gameEndTimestamp});`))
+    if (puuid !== undefined) {
+        promises.push(db_conn.queryToDB(`REPLACE INTO Play (puuid, matchId, gameEndTimestamp) VALUES('${puuid}', '${matchId}', ${gameEndTimestamp});`))
+    }
 
     await Promise.all(promises);
     return matchId;
 }
 
-module.exports = { fetchMatchIdsFromRiot, getMatchIds, getMatchData };
+module.exports = { fetchMatchIdsFromRiot, getMatchIds, getMatchData, fetchMatchData };
