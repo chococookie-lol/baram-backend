@@ -60,8 +60,8 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
             }
 
             fetchedData.map((matchId) => {
-                console.log('fetchMatchData(' + matchId + ');');
-                //promises.push(fetchMatchData(matchId, puuid));
+                // console.log('fetchMatchData(' + matchId + ');');
+                promises.push(fetchMatchData(matchId, puuid));
             });
 
             if (fetchedData.length < 100)
@@ -79,8 +79,8 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
         }
 
         const promises = fetchedData.map((matchId) => {
-            console.log('fetchMatchData(' + matchId + ');');
-            // return fetchMatchData(matchId, puuid);
+            // console.log('fetchMatchData(' + matchId + ');');
+            return fetchMatchData(matchId, puuid);
         });
 
         const dbResult = await Promise.all(promises);
