@@ -11,7 +11,7 @@ const match_field_names = ['gameCreation', 'gameDuration',
 const participant_field_names = ['matchId', 'puuid', 'participantNumber', 'goldEarned',
     'totalMinionsKilled', 'kills', 'deaths', 'assists', 'kda', 'killParticipation', 'championId',
     'championName', 'champLevel', 'totalDamageDealtToChampions', 'summoner1Id', 'summoner2Id',
-    'item0', 'item1', 'item2', 'item3', 'item4', 'item5', 'item6'];
+    'item0', 'item1', 'item2', 'item3', 'item4', 'item5', 'item6', 'summonerName'];
 
 async function getMatchData(matchId) {
     let dbResult = await db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`);
@@ -19,22 +19,19 @@ async function getMatchData(matchId) {
     if (dbResult.length == 0)
         throw new InternalCodeError(404, 'Match not found');
     else if (dbResult.length == 1) {
-        let promises = [];
         let pdata = [];
-        for (let i = 0; i < 10; i++) {
-            promises.push(db_conn.queryToDB(`SELECT * FROM Participant WHERE matchId=${db_conn.connection.escape(matchId)} AND participantNumber=${i};`)
+        await db_conn.queryToDB(`SELECT * FROM Participant WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY participantNumber;`)
             .then((rows) => {
                 if (rows.length === 0) {
                     throw InternalCodeError(404, `Participant not found (matchId: ${matchId}, participantNumber: ${i}`);
-                } 
-                delete rows[0].matchId;
-                delete rows[0].participantNumber;
-                pdata[i] = rows[0];
+                }
+                for (let i = 0; i < 10; i++) {
+                    delete rows[i].matchId;
+                    delete rows[i].participantNumber;
+                }
+                pdata = rows;
                 return;
-            }));
-        }
-
-        await Promise.all(promises);
+            });
 
         const ret = dbResult[0];
         ret['participants'] = pdata;
