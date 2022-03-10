@@ -6,7 +6,8 @@ create table Summoner
     name varchar(100),
     id varchar(63),
     puuid varchar(78) PRIMARY KEY,
-    summonerLevel long
+    summonerLevel long,
+    recentUpdate long
 );
 
 create table Play (
@@ -33,5 +34,7 @@ create table Matches (
 );
 
 create table Participant (
-    matchId varchar(30)
+    matchId varchar(30),
+    puuid varchar(78),
+    PRIMARY KEY(matchId, puuid)
 );

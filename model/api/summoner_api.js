@@ -36,7 +36,7 @@ function fetchSummonerFromRiot(name) {
         const summonerLevel = data.summonerLevel;
 
         // replace data by primary key puuid
-        let sql = `REPLACE INTO Summoner (accountId, profileIconId, revisionDate, name, id, puuid, summonerLevel) VALUES('${accountId}', ${profileIconId}, ${revisionDate}, '${data_name}', '${id}', '${puuid}', ${summonerLevel});`
+        let sql = `REPLACE INTO Summoner (accountId, profileIconId, revisionDate, name, id, puuid, summonerLevel, recenteUpdate) VALUES('${accountId}', ${profileIconId}, ${revisionDate}, '${data_name}', '${id}', '${puuid}', ${summonerLevel}, ${Date.now()});`
         return db_conn.queryToDB(sql);
     })
     .then(rows => {
