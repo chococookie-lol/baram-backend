@@ -74,7 +74,7 @@ router.post('/:matchId', middleware(matchId_schema), (req, res) => {
     MatchApi.fetchMatchData(req.params.matchId, undefined)
         .then(
             () => res.status(201).json({}),
-            err => res.status(err.code).json({ message: err.message })
+            err => res.status(err.code ?? 500).json({ message: err.message })
         )
         .catch(err => {
             console.trace();

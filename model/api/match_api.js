@@ -13,6 +13,8 @@ const participant_field_names = ['matchId', 'puuid', 'participantNumber', 'goldE
     'championName', 'champLevel', 'totalDamageDealtToChampions', 'summoner1Id', 'summoner2Id',
     'item0', 'item1', 'item2', 'item3', 'item4', 'item5', 'item6', 'summonerName', 'teamId'];
 
+const team_field_names = ['matchId', 'teamId', 'win', 'totalKill', 'totalDeath', 'totalAssist', 'gameEndedInSurrender', 'gameEndedInEarlySurrender'];
+
 async function getMatchData(matchId) {
     let dbResult = await db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`);
 
@@ -23,7 +25,7 @@ async function getMatchData(matchId) {
         await db_conn.queryToDB(`SELECT * FROM Participant WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY participantNumber;`)
             .then((rows) => {
                 if (rows.length === 0) {
-                    throw InternalCodeError(404, `Participant not found (matchId: ${matchId}, participantNumber: ${i}`);
+                    throw new InternalCodeError(404, `Participant not found (matchId: ${matchId}, participantNumber: ${i}`);
                 }
                 for (let i = 0; i < 10; i++) {
                     delete rows[i].matchId;
@@ -35,6 +37,15 @@ async function getMatchData(matchId) {
 
         const ret = dbResult[0];
         ret['participants'] = pdata;
+
+        await db_conn.queryToDB(`SELECT * FROM Team WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY teamId;`)
+            .then((rows) => {
+                if (rows.length === 0 || rows.length === 1) {
+                    throw new InternalCodeError(404, `Team not found (matchId: ${matchId})`);
+                }
+                console.log(JSON.stringify(rows));
+            })
+
         return ret;
     }
     else {
@@ -139,9 +150,37 @@ async function fetchMatchData(matchId, puuid) {
             ');')
         );
 
+        let team100KDA = [0, 0, 0];
+        let team200KDA = [0, 0, 0];
+        let team100Win = false;
+
+        // 두 팀 모두 같은값인지 확인 안됨
+        // 나중에 확인 후 수정
+        let gameEndedInEarlySurrender = false;
+        let gameEndedInSurrender = false;
+
         // add participants data to db
         for (let i = 0; i < 10; i++) {
             let pdata = mdata.info.participants[i];
+
+            if (pdata.teamId == 100) {
+                team100KDA[0] += pdata.kills;
+                team100KDA[1] += pdata.deaths;
+                team100KDA[2] += pdata.assists;
+            } else {
+                team200KDA[0] += pdata.kills;
+                team200KDA[1] += pdata.deaths;
+                team200KDA[2] += pdata.assists;
+            }
+
+            if (i == 0) {
+                team100Win = pdata.win;
+
+                // 수정예정
+                gameEndedInSurrender = pdata.gameEndedInSurrender;
+                gameEndedInEarlySurrender = pdata.gameEndedInEarlySurrender;
+            }
+
             promises.push(db_conn.queryToDB(`REPLACE INTO Participant (` +
                 participant_field_names.join()
                 + `) VALUES (`
@@ -173,6 +212,34 @@ async function fetchMatchData(matchId, puuid) {
                 + `);`
             ))
         }
+
+        promises.push(db_conn.queryToDB(`REPLACE INTO Team (` +
+            team_field_names.join()
+            + `) VALUES (`
+            + `'${matchId}',`
+            + `${100},`
+            + `${team100Win},`
+            + `${team100KDA[0]},`
+            + `${team100KDA[1]},`
+            + `${team100KDA[2]},`
+            + `${gameEndedInSurrender},`
+            + `${gameEndedInEarlySurrender}`
+            + `);`
+        ))
+
+        promises.push(db_conn.queryToDB(`REPLACE INTO Team (` +
+            team_field_names.join()
+            + `) VALUES (`
+            + `'${matchId}',`
+            + `${200},`
+            + `${!team100Win},`
+            + `${team200KDA[0]},`
+            + `${team200KDA[1]},`
+            + `${team200KDA[2]},`
+            + `${gameEndedInSurrender},`
+            + `${gameEndedInEarlySurrender}`
+            + `);`
+        ))
     } else {
         gameEndTimestamp = mdata[0].gameEndTimestamp;
     }

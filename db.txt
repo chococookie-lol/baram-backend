@@ -61,3 +61,15 @@ create table Participant (
     teamId int,
     PRIMARY KEY(matchId, puuid)
 );
+
+create table Team (
+    matchId varchar(30),
+    teamId int,
+    win boolean,
+    totalKill int,
+    totalDeath int,
+    totalAssist int,
+    gameEndedInSurrender boolean,
+    gameEndedInEarlySurrender boolean,
+    PRIMARY KEY(matchId, teamId)
+);
