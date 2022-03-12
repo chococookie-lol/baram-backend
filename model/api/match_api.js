@@ -43,7 +43,7 @@ async function getMatchData(matchId) {
                 if (rows.length === 0 || rows.length === 1) {
                     throw new InternalCodeError(404, `Team not found (matchId: ${matchId})`);
                 }
-                console.log(JSON.stringify(rows));
+                ret['team'] = rows;
             })
 
         return ret;
