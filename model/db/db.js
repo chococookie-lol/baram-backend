@@ -29,10 +29,10 @@ class Sql {
                     return reject(err);
                 }
                 connect.query(query, (error, rows) => {
-                    connect.release;
                     if (error) reject(error);
                     else resolve(rows);
                 });
+                    connect.release();
             })
         });
     }
