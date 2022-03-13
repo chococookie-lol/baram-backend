@@ -132,6 +132,11 @@ async function fetchMatchData(matchId, puuid) {
         if (mdata.status)
             throw new InternalCodeError(403, mdata.status.message);
 
+        // support only after version 12
+        if (Number(mdata.info.gameVersion.slice(0, 2)) < 12) {
+            return;
+        }
+
         gameEndTimestamp = mdata.info.gameEndTimestamp;
 
         //add match to db
