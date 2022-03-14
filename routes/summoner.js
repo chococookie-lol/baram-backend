@@ -38,7 +38,7 @@ router.post('/:name', middleware(name_schema), (req, res) => {
     console.log('fetch start');
     SummonerApi.fetchSummonerFromRiot(req.params.name)
     .then(
-        data => res.status(200).json(),
+        data => res.status(201).json(),
         err => res.status(err.code).json({message: err.message}));
 });
 
