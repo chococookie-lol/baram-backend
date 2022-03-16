@@ -132,11 +132,6 @@ async function fetchMatchData(matchId, puuid) {
         if (mdata.status)
             throw new InternalCodeError(403, mdata.status.message);
 
-        // support only after version 12
-        if (Number(mdata.info.gameVersion.slice(0, 2)) < 12) {
-            return;
-        }
-
         gameEndTimestamp = mdata.info.gameEndTimestamp;
 
         //add match to db
@@ -193,37 +188,38 @@ async function fetchMatchData(matchId, puuid) {
         for (let i = 0; i < 10; i++) {
             let pdata = mdata.info.participants[i];
             const killParticipation = (pdata.kills + pdata.assists) / teamData[pdata.teamId].KDA[0]
+            const kda = (pdata.kills + pdata.assists) / pdata.deaths;
 
-                promises.push(db_conn.queryToDB(`REPLACE INTO Participant (` +
-                    participant_field_names.join()
-                    + `) VALUES (`
-                    + `'${matchId}',`
-                    + `'${pdata.puuid}',`
-                    + `${i},`
-                    + `${pdata.goldEarned},`
-                    + `${pdata.totalMinionsKilled},`
-                    + `${pdata.kills},`
-                    + `${pdata.deaths},`
-                    + `${pdata.assists},`
-                    + `${pdata.challenges.kda},`
-                    + `${killParticipation},`
-                    + `${pdata.championId},`
-                    + `'${pdata.championName}',`
-                    + `${pdata.champLevel},`
-                    + `${pdata.totalDamageDealtToChampions},`
-                    + `${pdata.summoner1Id},`
-                    + `${pdata.summoner2Id},`
-                    + `${pdata.item0},`
-                    + `${pdata.item1},`
-                    + `${pdata.item2},`
-                    + `${pdata.item3},`
-                    + `${pdata.item4},`
-                    + `${pdata.item5},`
-                    + `${pdata.item6},`
-                    + `'${pdata.summonerName}',`
-                    + `${pdata.teamId}`
-                    + `);`
-                ))
+            promises.push(db_conn.queryToDB(`REPLACE INTO Participant (` +
+                participant_field_names.join()
+                + `) VALUES (`
+                + `'${matchId}',`
+                + `'${pdata.puuid}',`
+                + `${i},`
+                + `${pdata.goldEarned},`
+                + `${pdata.totalMinionsKilled},`
+                + `${pdata.kills},`
+                + `${pdata.deaths},`
+                + `${pdata.assists},`
+                + `${kda},`
+                + `${killParticipation},`
+                + `${pdata.championId},`
+                + `'${pdata.championName}',`
+                + `${pdata.champLevel},`
+                + `${pdata.totalDamageDealtToChampions},`
+                + `${pdata.summoner1Id},`
+                + `${pdata.summoner2Id},`
+                + `${pdata.item0},`
+                + `${pdata.item1},`
+                + `${pdata.item2},`
+                + `${pdata.item3},`
+                + `${pdata.item4},`
+                + `${pdata.item5},`
+                + `${pdata.item6},`
+                + `'${pdata.summonerName}',`
+                + `${pdata.teamId}`
+                + `);`
+            ))
         }
 
         for (key in teamData) {
