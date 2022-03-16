@@ -102,7 +102,6 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
             .then(res => res.json());
 
         if (fetchedData.status != undefined) {
-            console.error(JSON.stringify(data));
             throw new InternalCodeError(403, fetchedData.status.message);
         }
 
