@@ -15,6 +15,8 @@ const participant_field_names = ['matchId', 'puuid', 'participantNumber', 'goldE
 
 const team_field_names = ['matchId', 'teamId', 'win', 'totalKill', 'totalDeath', 'totalAssist', 'gameEndedInSurrender', 'gameEndedInEarlySurrender'];
 
+const perk_field_names = ['matchId', 'puuid', 'defense', 'flex', 'offense', 'primaryStyle', 'primary1', 'primary2', 'primary3', 'primary4', 'subStyle', 'sub1', 'sub2'];
+
 async function getMatchData(matchId) {
     let dbResult = await db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`);
 
@@ -22,18 +24,25 @@ async function getMatchData(matchId) {
         throw new InternalCodeError(404, 'Match not found');
     else if (dbResult.length == 1) {
         let pdata = [];
-        await db_conn.queryToDB(`SELECT * FROM Participant WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY participantNumber;`)
-            .then((rows) => {
-                if (rows.length === 0) {
-                    throw new InternalCodeError(404, `Participant not found (matchId: ${matchId}, participantNumber: ${i}`);
-                }
-                for (let i = 0; i < 10; i++) {
-                    delete rows[i].matchId;
-                    delete rows[i].participantNumber;
-                }
-                pdata = rows;
-                return;
-            });
+        let participants = await db_conn.queryToDB(`SELECT * FROM Participant WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY participantNumber;`)
+
+        if (participants.length === 0) {
+            throw new InternalCodeError(404, `Participant not found (matchId: ${matchId})`);
+        }
+
+        for (let i = 0; i < 10; i++) {
+            let perk = await db_conn.queryToDB(`SELECT * FROM Perk WHERE matchId=${db_conn.connection.escape(matchId)} AND puuid='${participants[i].puuid}';`)
+            if (perk.length === 0) {
+                throw new InternalCodeError(404, `Perk not found (matchId: ${matchId})`);
+            }
+            delete perk[0].matchId;
+            delete perk[0].puuid;
+            participants[i].perk = perk[0];
+
+            delete participants[i].matchId;
+            delete participants[i].participantNumber;
+        }
+        pdata = participants;
 
         const ret = dbResult[0];
         ret['participants'] = pdata;
@@ -45,6 +54,7 @@ async function getMatchData(matchId) {
                 }
                 ret['teams'] = rows;
             })
+
 
         return ret;
     }
@@ -219,6 +229,33 @@ async function fetchMatchData(matchId, puuid) {
                 + `${pdata.teamId}`
                 + `);`
             ))
+
+            // perks
+
+            let perks = pdata.perks;
+            let statPerks = perks.statPerks;
+            let primaryPerks = perks.styles[0];
+            let subPerks = perks.styles[1];
+
+            promises.push(db_conn.queryToDB(`REPLACE INTO Perk (` +
+                perk_field_names.join()
+                + `) VALUES (`
+                + `'${matchId}',`
+                + `'${pdata.puuid}',`
+                + `${statPerks.defense},`
+                + `${statPerks.flex},`
+                + `${statPerks.offense},`
+                + `${primaryPerks.style},`
+                + `${primaryPerks.selections[0].perk},`
+                + `${primaryPerks.selections[1].perk},`
+                + `${primaryPerks.selections[2].perk},`
+                + `${primaryPerks.selections[3].perk},`
+                + `${subPerks.style},`
+                + `${subPerks.selections[0].perk},`
+                + `${subPerks.selections[1].perk}`
+                + `);`
+            ))
+
         }
 
         for (key in teamData) {
