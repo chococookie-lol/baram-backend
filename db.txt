@@ -73,3 +73,20 @@ create table Team (
     gameEndedInEarlySurrender boolean,
     PRIMARY KEY(matchId, teamId)
 );
+
+create table Perk (
+    matchId varchar(30),
+    puuid varchar(78),
+    defense int,
+    flex int,
+    offense int,
+    primaryStyle int,
+    primary1 int,
+    primary2 int,
+    primary3 int,
+    primary4 int,
+    subStyle int,
+    sub1 int,
+    sub2 int,
+    PRIMARY KEY(matchId, puuid)
+)
