@@ -90,3 +90,16 @@ create table Perk (
     sub2 int,
     PRIMARY KEY(matchId, puuid)
 )
+
+create table Mastery (
+    championId int,
+    championLevel int, 
+    championPoints int, 
+    lastPlayTime long,
+    championPointsSinceLastLevel int,
+    championPointsUntilNextLevel int,
+    chestGranted boolean,
+    tokensEarned int, 
+    summonerId varchar(63),
+    PRIMARY KEY(summonerId, championId)
+);
