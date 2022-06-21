@@ -12,13 +12,13 @@ var cors = require('cors');
 require('console-stamp')(console, '[yyyy-mm-dd HH:MM:ss]');
 
 process.on('uncaughtException', function (e) {
-    console.log(e.stack || e);
-    process.exit(1);
+  console.log(e.stack || e);
+  process.exit(1);
 });
 
 var app = express();
 
-app.use(cors({origin: 'http://baram.ga',credentials: true}));
+app.use(cors({ origin: 'http://baram.ga', credentials: true }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -29,5 +29,4 @@ app.use('/matches', matchesRouter);
 
 app.use('*', errorRouter);
 
-
-app.listen(3001, () => console.log("server online"));
+app.listen(3001, () => console.log('server online'));
