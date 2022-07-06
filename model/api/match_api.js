@@ -48,32 +48,9 @@ const participant_field_names = [
   'teamId',
 ];
 
-const team_field_names = [
-  'matchId',
-  'teamId',
-  'win',
-  'totalKill',
-  'totalDeath',
-  'totalAssist',
-  'gameEndedInSurrender',
-  'gameEndedInEarlySurrender',
-];
+const team_field_names = ['matchId', 'teamId', 'win', 'totalKill', 'totalDeath', 'totalAssist', 'gameEndedInSurrender', 'gameEndedInEarlySurrender'];
 
-const perk_field_names = [
-  'matchId',
-  'puuid',
-  'defense',
-  'flex',
-  'offense',
-  'primaryStyle',
-  'primary1',
-  'primary2',
-  'primary3',
-  'primary4',
-  'subStyle',
-  'sub1',
-  'sub2',
-];
+const perk_field_names = ['matchId', 'puuid', 'defense', 'flex', 'offense', 'primaryStyle', 'primary1', 'primary2', 'primary3', 'primary4', 'subStyle', 'sub1', 'sub2'];
 
 async function getMatchData(matchId) {
   let dbResult = await db_conn.queryToDB(`SELECT * FROM Matches WHERE matchId=${db_conn.connection.escape(matchId)};`);
@@ -81,18 +58,14 @@ async function getMatchData(matchId) {
   if (dbResult.length == 0) throw new InternalCodeError(404, 'Match not found');
   else if (dbResult.length == 1) {
     let pdata = [];
-    let participants = await db_conn.queryToDB(
-      `SELECT * FROM Participant WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY participantNumber;`,
-    );
+    let participants = await db_conn.queryToDB(`SELECT * FROM Participant WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY participantNumber;`);
 
     if (participants.length === 0) {
       throw new InternalCodeError(404, `Participant not found (matchId: ${matchId})`);
     }
 
     for (let i = 0; i < 10; i++) {
-      let perk = await db_conn.queryToDB(
-        `SELECT * FROM Perk WHERE matchId=${db_conn.connection.escape(matchId)} AND puuid='${participants[i].puuid}';`,
-      );
+      let perk = await db_conn.queryToDB(`SELECT * FROM Perk WHERE matchId=${db_conn.connection.escape(matchId)} AND puuid='${participants[i].puuid}';`);
       if (perk.length === 0) {
         throw new InternalCodeError(404, `Perk not found (matchId: ${matchId})`);
       }
@@ -108,14 +81,12 @@ async function getMatchData(matchId) {
     const ret = dbResult[0];
     ret['participants'] = pdata;
 
-    await db_conn
-      .queryToDB(`SELECT * FROM Team WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY teamId;`)
-      .then(rows => {
-        if (rows.length === 0 || rows.length === 1) {
-          throw new InternalCodeError(404, `Team not found (matchId: ${matchId})`);
-        }
-        ret['teams'] = rows;
-      });
+    await db_conn.queryToDB(`SELECT * FROM Team WHERE matchId=${db_conn.connection.escape(matchId)} ORDER BY teamId;`).then(rows => {
+      if (rows.length === 0 || rows.length === 1) {
+        throw new InternalCodeError(404, `Team not found (matchId: ${matchId})`);
+      }
+      ret['teams'] = rows;
+    });
 
     return ret;
   } else {
@@ -126,9 +97,7 @@ async function getMatchData(matchId) {
 
 async function getMatchIds(puuid, after, count) {
   let dbResult = await db_conn.queryToDB(
-    `SELECT matchId FROM Play WHERE puuid=${db_conn.connection.escape(puuid)}${
-      after ? `AND gameEndTimeStamp<${after}` : ''
-    } ORDER BY gameEndTimestamp DESC LIMIT ${count};`,
+    `SELECT matchId FROM Play WHERE puuid=${db_conn.connection.escape(puuid)}${after ? `AND gameEndTimeStamp<${after}` : ''} ORDER BY gameEndTimestamp DESC LIMIT ${count};`,
   );
 
   console.log(dbResult.length + ' records selected');
@@ -146,11 +115,7 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
 
   // 처음 로드할 경우 : {count}개만
   // 업데이트일 경우 : 최신~db상 가장 최근 match 까지
-  let latest = await db_conn.queryToDB(
-    `SELECT gameEndTimeStamp FROM Play WHERE puuid=${db_conn.connection.escape(
-      puuid,
-    )} ORDER BY gameEndTimestamp DESC LIMIT 1;`,
-  );
+  let latest = await db_conn.queryToDB(`SELECT gameEndTimeStamp FROM Play WHERE puuid=${db_conn.connection.escape(puuid)} ORDER BY gameEndTimestamp DESC LIMIT 1;`);
   if (!after && latest.length == 1) {
     //update
     let promises = [];
@@ -176,9 +141,7 @@ async function fetchMatchIdsFromRiot(puuid, after, count) {
   } else {
     //load more or first load
     let fetchedData = await fetch(
-      `https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}&queue=450${
-        after ? `&endTime=${Math.floor(after / 1000)}` : ''
-      }`,
+      `https://asia.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?count=${count}&api_key=${api_key}&queue=450${after ? `&endTime=${Math.floor(after / 1000)}` : ''}`,
     ).then(res => res.json());
 
     if (fetchedData.status != undefined) {
@@ -205,9 +168,7 @@ async function fetchMatchData(matchId, puuid) {
 
   if (mdata.length == 0) {
     //fetch
-    mdata = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${api_key}`).then(res =>
-      res.json(),
-    );
+    mdata = await fetch(`https://asia.api.riotgames.com/lol/match/v5/matches/${matchId}?api_key=${api_key}`).then(res => res.json());
     //fetch error
     if (mdata.status) throw new InternalCodeError(403, mdata.status.message);
 
@@ -369,11 +330,7 @@ async function fetchMatchData(matchId, puuid) {
   // 전에는 match의 모든 participant에 대한 play를 저장했으나, 이렇게 할 경우 각 플레이어별 match 리스트 관리가 어렵기 때문에 변경
 
   if (puuid !== undefined) {
-    promises.push(
-      db_conn.queryToDB(
-        `REPLACE INTO Play (puuid, matchId, gameEndTimestamp) VALUES('${puuid}', '${matchId}', ${gameEndTimestamp});`,
-      ),
-    );
+    promises.push(db_conn.queryToDB(`REPLACE INTO Play (puuid, matchId, gameEndTimestamp) VALUES('${puuid}', '${matchId}', ${gameEndTimestamp});`));
   }
 
   await Promise.all(promises);
