@@ -103,3 +103,19 @@ create table Mastery (
     summonerId varchar(63),
     PRIMARY KEY(summonerId, championId)
 );
+
+CREATE TABLE Statistic 
+(
+	puuid varchar(78) PRIMARY KEY,
+	totalGameCount int,
+	totalGameWinCount int,
+	totalBlueTeamCount int,
+	totalBlueTeamWinCount int,
+	mostShortPlayTime int,
+	mostLongPlayTime int,
+	maxDamageToChampions int,
+	minDamageToChampions int,
+	maxPlayChampionId1 int,
+	maxPlayChampionId2 int,
+	maxPlayChampionId3 int
+);
