@@ -117,5 +117,8 @@ CREATE TABLE Statistic
 	minDamageToChampions int,
 	maxPlayChampionId1 int,
 	maxPlayChampionId2 int,
-	maxPlayChampionId3 int
-);
+	maxPlayChampionId3 int,
+	maxPlayChampionCount1 int,
+	maxPlayChampionCount2 int,
+	maxPlayChampionCount3 int,
+)
