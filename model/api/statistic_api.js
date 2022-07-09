@@ -23,6 +23,12 @@ async function updateUserStatistic(puuid) {
   const promises = [];
   const field_data = {};
 
+  const puuidResult = await db_conn.queryToDB(`SELECT name FROM Summoner WHERE puuid=${db_conn.connection.escape(puuid)};`);
+
+  if (puuidResult.length !== 1) {
+    return false;
+  }
+
   for (field_name of statistic_field_names) {
     field_data[field_name] = undefined;
   }
@@ -107,6 +113,8 @@ async function updateUserStatistic(puuid) {
         .join() +
       `);`,
   );
+
+  return true;
 }
 
 async function getTotalGameCount(puuid) {
